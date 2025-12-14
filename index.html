@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pelea Épica</title>
+
+<style>
+  body {
+    background: #111;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+    margin: 0;
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: clamp(20px, 5vw, 32px);
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: clamp(14px, 4vw, 16px);
+    margin: 10px;
+    cursor: pointer;
+  }
+
+  #arena {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    height: 50vh;
+    max-height: 450px;
+    margin: auto;
+    background: #222;
+    border: 3px solid white;
+    overflow: hidden;
+  }
+
+  .fighter {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+  }
+
+  .name {
+    position: absolute;
+    width: 60px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    pointer-events: none;
+  }
+
+  .hp-bar {
+    width: 90%;
+    max-width: 300px;
+    height: 18px;
+    background: red;
+    margin: 6px auto;
+    border: 2px solid white;
+  }
+
+  .hp {
+    height: 100%;
+    background: lime;
+    width: 100%;
+  }
+
+  #winner {
+    font-size: clamp(22px, 6vw, 32px);
+    margin-top: 20px;
+    color: gold;
+  }
+
+  @media (max-width: 600px) {
+    .fighter, .name {
+      width: 45px;
+      height: 45px;
+      font-size: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>🔥 TODOS VS OLI 🔥</h1>
+
+<button onclick="startFight()">▶ Iniciar pelea</button>
+
+<div>OLI HP</div>
+<div class="hp-bar"><div id="hpOLI" class="hp"></div></div>
+
+<div>ABUELA HP</div>
+<div class="hp-bar"><div id="hpABUELA" class="hp"></div></div>
+
+<div>MILO HP</div>
+<div class="hp-bar"><div id="hpMILO" class="hp"></div></div>
+
+<div>MAMÁ 2021 HP</div>
+<div class="hp-bar"><div id="hpMAMA" class="hp"></div></div>
+
+<div>DANTE HP</div>
+<div class="hp-bar"><div id="hpDANTE" class="hp"></div></div>
+
+<div id="arena">
+  <div id="nameOLI" class="name">OLI</div>
+  <img src="OLI.jpg" id="OLI" class="fighter">
+
+  <div id="nameABUELA" class="name">ABUELA</div>
+  <img src="abuela.jpg" id="ABUELA" class="fighter">
+
+  <div id="nameMILO" class="name">MILO</div>
+  <img src="milo.jpg" id="MILO" class="fighter">
+
+  <div id="nameMAMA" class="name">MAMÁ 2021</div>
+  <img src="MAMA DEL 2021.JPG" id="MAMA" class="fighter">
+
+  <div id="nameDANTE" class="name">DANTE</div>
+  <img src="DANTE.jpg" id="DANTE" class="fighter">
+</div>
+
+<div id="winner"></div>
+
+<script>
+const arena = document.getElementById("arena");
+let size = 60;
+let started = false;
+let gameOver = false;
+
+function updateSize() {
+  size = window.innerWidth < 600 ? 45 : 60;
+}
+updateSize();
+window.addEventListener("resize", updateSize);
+
+const fighters = [
+  { id:"OLI", nameEl:"nameOLI", hpEl:"hpOLI", x:80,y:80,dx:3,dy:3,hp:100,isOLI:true,alive:true },
+  { id:"ABUELA", nameEl:"nameABUELA", hpEl:"hpABUELA", x:500,y:80,dx:-3,dy:2,hp:100,alive:true },
+  { id:"MILO", nameEl:"nameMILO", hpEl:"hpMILO", x:200,y:250,dx:2,dy:-3,hp:100,alive:true },
+  { id:"MAMA", nameEl:"nameMAMA", hpEl:"hpMAMA", x:600,y:250,dx:-2,dy:-2,hp:100,alive:true },
+  { id:"DANTE", nameEl:"nameDANTE", hpEl:"hpDANTE", x:350,y:150,dx:3,dy:-2,hp:100,alive:true }
+];
+
+fighters.forEach(f=>{
+  f.el=document.getElementById(f.id);
+  f.name=document.getElementById(f.nameEl);
+});
+
+function updateHP(){
+  fighters.forEach(f=>{
+    document.getElementById(f.hpEl).style.width=f.hp+"%";
+  });
+}
+
+function bounce(f){
+  if(f.x<=0||f.x+size>=arena.clientWidth)f.dx*=-1;
+  if(f.y<=0||f.y+size>=arena.clientHeight)f.dy*=-1;
+}
+
+function collision(a,b){
+  return a.x<b.x+size&&a.x+size>b.x&&a.y<b.y+size&&a.y+size>b.y;
+}
+
+function eliminate(f){
+  f.alive=false;
+  f.el.style.display="none";
+  f.name.style.display="none";
+  document.getElementById(f.hpEl).style.width="0%";
+}
+
+function startFight(){
+  if(!started){started=true;fight();}
+}
+
+function fight(){
+  if(gameOver||!started)return;
+
+  fighters.forEach(f=>{
+    if(!f.alive)return;
+    f.x+=f.dx;f.y+=f.dy;
+    bounce(f);
+  });
+
+  for(let i=0;i<fighters.length;i++){
+    for(let j=i+1;j<fighters.length;j++){
+      let a=fighters[i],b=fighters[j];
+      if(!a.alive||!b.alive)continue;
+      if(collision(a,b)){
+        a.dx*=-1;a.dy*=-1;
+        b.dx*=-1;b.dy*=-1;
+
+        a.hp-=a.isOLI?0.1:Math.floor(Math.random()*5)+1;
+        b.hp-=b.isOLI?0.1:Math.floor(Math.random()*5)+1;
+
+        if(a.hp<=0&&!a.isOLI)eliminate(a);
+        if(b.hp<=0&&!b.isOLI)eliminate(b);
+
+        a.hp=Math.max(0,a.hp);
+        b.hp=Math.max(0,b.hp);
+        updateHP();
+      }
+    }
+  }
+
+  fighters.forEach(f=>{
+    if(!f.alive)return;
+    f.el.style.left=f.x+"px";
+    f.el.style.top=f.y+"px";
+    f.name.style.left=f.x+"px";
+    f.name.style.top=(f.y-14)+"px";
+  });
+
+  if(fighters.filter(f=>f.alive&&!f.isOLI).length===0){
+    gameOver=true;
+    document.getElementById("winner").innerText="🏆 OLI GANA SIEMPRE 🏆";
+    return;
+  }
+
+  requestAnimationFrame(fight);
+}
+
+updateHP();
+</script>
+
+</body>
+</html>
